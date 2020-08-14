@@ -18,6 +18,7 @@ import { TreeService } from './tree.service';
 import { BimodalService, ASCTD } from '../services/bimodal.service';
 import { SconfigService } from '../services/sconfig.service';
 import { Router } from '@angular/router';
+import { transforms } from 'vega';
 
 @Component({
   selector: 'app-tree',
@@ -345,6 +346,17 @@ export class TreeComponent implements OnInit, OnChanges, OnDestroy {
             },
           ],
         },
+        {
+          name: 'symbols_to_be_kept',
+          source: 'nodes',
+          transform: [
+            {
+              type: 'filter',
+              expr: 'node__click === datum.id || indata("sources_clicked_array", "id", datum.id) || indata("targets_clicked_array", "id", datum.id)',
+            },
+          ]
+        }
+        
       ],
       scales: [
         {
@@ -412,7 +424,15 @@ export class TreeComponent implements OnInit, OnChanges, OnDestroy {
                     },
                     { value: '#ccc' },
                   ],
-                  opacity: { value: 0.4 },
+                  opacity: [
+                    {
+                      test: 'node__click !== null',
+                      value: 0.1
+                    },
+                    {
+                      value: 0.4
+                    }
+                  ],
                   strokeWidth: { value: 1.5 },
                 },
               },
@@ -430,7 +450,20 @@ export class TreeComponent implements OnInit, OnChanges, OnDestroy {
                   x: { field: 'x' },
                   y: { field: 'y' },
                   tooltip: [{ field: 'uberonId', type: 'quantitative' }],
-                  opacity: { signal: 'datum.children ? 1 : 0' },
+                  opacity: [
+                    {
+                      test: 'datum.children && node__click === null',
+                      value: 1
+                    },
+                    {
+                      test: "node__click !== null",
+                      value: 0.1
+                    },
+                    {
+                      value: 0
+                    }
+                  ],
+                  // fill: {value: "#ececec"},
                   fill: { field: 'color' },
                 },
               },
@@ -450,7 +483,19 @@ export class TreeComponent implements OnInit, OnChanges, OnDestroy {
                   x: { field: 'x' },
                   y: { field: 'y' },
                   dx: { signal: 'datum.children ? 15: -15' },
-                  opacity: { signal: 'datum.children ? 1 : 0' },
+                  opacity: [
+                    {
+                      test: 'datum.children && node__click === null',
+                      value: 1
+                    },
+                    {
+                      test: "node__click !== null",
+                      value: 0.1
+                    },
+                    {
+                      value: 0
+                    }
+                  ],
                   align: { signal: "datum.children ? 'left' : 'right'" },
                 },
               },
@@ -521,7 +566,6 @@ export class TreeComponent implements OnInit, OnChanges, OnDestroy {
                         "indata('targets_hovered_array', 'id', datum.source.id)",
                       value: '#377EB8',
                     },
-
                     {
                       test:
                         "indata('targets_clicked_array', 'id', datum.source.id)",
@@ -557,6 +601,10 @@ export class TreeComponent implements OnInit, OnChanges, OnDestroy {
                         "indata('sources_clicked_array', 'id', datum.target.id) && datum.source.group !== 2",
                       value: 0.65,
                     },
+                    {
+                      "test": "node__click !== null",
+                      "value": 0.1
+                    },
                     { value: 0.4 },
                   ],
                   zindex: [
@@ -590,6 +638,9 @@ export class TreeComponent implements OnInit, OnChanges, OnDestroy {
                   },
                 },
                 update: {
+                  "opacity": {
+                    "signal": "node__click === null ? 1 : indata('symbols_to_be_kept', 'id', datum.id) || indata('targets_clicked_array__bold', 'targets', datum.id) || (indata('sources_clicked_array__bold', 'sources', datum.id) && datum.group !== 2 && datum.group !== 3)? 1 : 0.1"
+                },
                   stroke: { signal: 'datum.problem ? "#000": "#fff"' },
                   strokeWidth: { signal: 'datum.problem ? 3: 0' }
                 }
@@ -633,7 +684,9 @@ export class TreeComponent implements OnInit, OnChanges, OnDestroy {
                       value: 'bold',
                     },
                   ],
-                  opacity: { value: 1 },
+                  "opacity": {
+                    "signal": "node__click === null ? 1 : indata('symbols_to_be_kept', 'id', datum.id) || indata('targets_clicked_array__bold', 'targets', datum.id) || (indata('sources_clicked_array__bold', 'sources', datum.id) && datum.group !== 2 && datum.group !== 3)? 1 : 0.1"
+                },
                   limit: { value: 180 },
                 },
               },
@@ -767,7 +820,7 @@ export class TreeComponent implements OnInit, OnChanges, OnDestroy {
 
   async downloadVis(format) {
     const dt = moment(new Date()).format('YYYY.MM.DD_hh.mm');
-    const sn = this.sheet.sheet.display.toLowerCase().replace(' ', '_');
+    const sn = this.currentSheet.display.toLowerCase().replace(' ', '_');
     const formatType = format.toLowerCase();
 
     if (format === 'Vega Spec') {
