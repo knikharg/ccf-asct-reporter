@@ -210,6 +210,28 @@ export class TreeComponent implements OnInit, OnChanges, OnDestroy {
           ],
         },
         {
+          name: 'targets__hover',
+          value: [],
+          on: [
+            {
+              events: '@bimodal-symbol:mouseover',
+              update: 'datum.targets === targets__hover ? [] : datum.targets',
+            },
+            { events: 'mouseover[!event.item]', update: '[]' },
+          ],
+        },
+        {
+          name: 'sources__hover',
+          value: [],
+          on: [
+            {
+              events: '@bimodal-symbol:mouseover',
+              update: 'datum.sources === sources__hover ? [] : datum.sources',
+            },
+            { events: 'mouseover[!event.item]', update: '[]' },
+          ],
+        },
+        {
           name: 'compare_dd__signal',
           value: [],
         },
@@ -319,7 +341,7 @@ export class TreeComponent implements OnInit, OnChanges, OnDestroy {
           ],
         },
         {
-          name: 'targets_clicked_array__bold',
+          name: 'targets_of_targets__click',
           source: 'nodes',
           transform: [
             {
@@ -333,7 +355,21 @@ export class TreeComponent implements OnInit, OnChanges, OnDestroy {
           ],
         },
         {
-          name: 'sources_clicked_array__bold',
+          name: 'targets_of_targets__hover',
+          source: 'nodes',
+          transform: [
+            {
+              type: 'filter',
+              expr: 'indexof(targets__hover, datum.id) !== -1',
+            },
+            {
+              type: 'flatten',
+              fields: ['targets'],
+            },
+          ],
+        },
+        {
+          name: 'sources_of_sources__click',
           source: 'nodes',
           transform: [
             {
@@ -347,12 +383,36 @@ export class TreeComponent implements OnInit, OnChanges, OnDestroy {
           ],
         },
         {
-          name: 'symbols_to_be_kept',
+          name: 'sources_of_sources__hover',
+          source: 'nodes',
+          transform: [
+            {
+              type: 'filter',
+              expr: 'indexof(sources__hover, datum.id) !== -1',
+            },
+            {
+              type: 'flatten',
+              fields: ['sources'],
+            },
+          ],
+        },
+        {
+          name: 'marks_to_be_kept__click',
           source: 'nodes',
           transform: [
             {
               type: 'filter',
               expr: 'node__click === datum.id || indata("sources_clicked_array", "id", datum.id) || indata("targets_clicked_array", "id", datum.id)',
+            },
+          ]
+        },
+        {
+          name: 'marks_to_be_kept__hover',
+          source: 'nodes',
+          transform: [
+            {
+              type: 'filter',
+              expr: 'node__hover === datum.id || indata("sources_hovered_array", "id", datum.id) || indata("targets_hovered_array", "id", datum.id)',
             },
           ]
         }
@@ -592,13 +652,11 @@ export class TreeComponent implements OnInit, OnChanges, OnDestroy {
                     { test: 'datum.target.id === node__click', value: 0.65 },
                     { test: 'datum.source.id === node__click', value: 0.65 },
                     {
-                      test:
-                        "indata('targets_clicked_array', 'id', datum.source.id)",
+                      test: "indata('targets_clicked_array', 'id', datum.source.id)",
                       value: 0.65,
                     },
                     {
-                      test:
-                        "indata('sources_clicked_array', 'id', datum.target.id) && datum.source.group !== 2",
+                      test: "indata('sources_clicked_array', 'id', datum.target.id) && datum.source.group !== 2",
                       value: 0.65,
                     },
                     {
@@ -638,9 +696,24 @@ export class TreeComponent implements OnInit, OnChanges, OnDestroy {
                   },
                 },
                 update: {
-                  "opacity": {
-                    "signal": "node__click === null ? 1 : indata('symbols_to_be_kept', 'id', datum.id) || indata('targets_clicked_array__bold', 'targets', datum.id) || (indata('sources_clicked_array__bold', 'sources', datum.id) && datum.group !== 2 && datum.group !== 3)? 1 : 0.1"
-                },
+                  "opacity": 
+                    [
+                      {
+                        test: 'node__click === null',
+                        value: 1
+                      },
+                      {
+                        test: "indata('marks_to_be_kept__click', 'id', datum.id) || indata('targets_of_targets__click', 'targets', datum.id) || (indata('sources_of_sources__click', 'sources', datum.id) && datum.group !== 2 && datum.group !== 3)",
+                        value: 1
+                      },
+                      {
+                        test: "node__hover !== null && indata('marks_to_be_kept__hover', 'id', datum.id) || indata('targets_of_targets__hover', 'targets', datum.id) || (indata('sources_of_sources__hover', 'sources', datum.id) && datum.group !== 2 && datum.group !== 3)",
+                        value: 1
+                      },
+                      {
+                        value: 0.1
+                      }
+                    ],
                   stroke: { signal: 'datum.problem ? "#000": "#fff"' },
                   strokeWidth: { signal: 'datum.problem ? 3: 0' }
                 }
@@ -675,18 +748,32 @@ export class TreeComponent implements OnInit, OnChanges, OnDestroy {
                     },
                     {
                       test:
-                        "indata('targets_clicked_array__bold', 'targets', datum.id)",
+                        "indata('targets_of_targets__click', 'targets', datum.id)",
                       value: 'bold',
                     },
                     {
                       test:
-                        "indata('sources_clicked_array__bold', 'sources', datum.id)  && datum.group !== 2 && datum.group !== 3",
+                        "indata('sources_of_sources__click', 'sources', datum.id)  && datum.group !== 2 && datum.group !== 3",
                       value: 'bold',
                     },
                   ],
-                  "opacity": {
-                    "signal": "node__click === null ? 1 : indata('symbols_to_be_kept', 'id', datum.id) || indata('targets_clicked_array__bold', 'targets', datum.id) || (indata('sources_clicked_array__bold', 'sources', datum.id) && datum.group !== 2 && datum.group !== 3)? 1 : 0.1"
-                },
+                  "opacity": [
+                    {
+                      test: 'node__click === null',
+                      value: 1
+                    },
+                    {
+                      test: "indata('marks_to_be_kept__click', 'id', datum.id) || indata('targets_of_targets__click', 'targets', datum.id) || (indata('sources_of_sources__click', 'sources', datum.id) && datum.group !== 2 && datum.group !== 3)",
+                      value: 1
+                    },
+                    {
+                      test: "node__hover !== null && indata('marks_to_be_kept__hover', 'id', datum.id) || indata('targets_of_targets__hover', 'targets', datum.id) || (indata('sources_of_sources__hover', 'sources', datum.id) && datum.group !== 2 && datum.group !== 3)",
+                      value: 1
+                    },
+                    {
+                      value: 0.1
+                    }
+                  ],
                   limit: { value: 180 },
                 },
               },
