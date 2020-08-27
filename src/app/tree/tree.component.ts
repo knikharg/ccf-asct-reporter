@@ -545,6 +545,10 @@ export class TreeComponent implements OnInit, OnChanges, OnDestroy {
                   dx: { signal: 'datum.children ? 15: -15' },
                   opacity: [
                     {
+                      test: '!datum.children',
+                      value: 0
+                    },
+                    {
                       test: 'datum.children && node__click === null',
                       value: 1
                     },
@@ -711,7 +715,7 @@ export class TreeComponent implements OnInit, OnChanges, OnDestroy {
                   "opacity": 
                     [
                       {
-                        test: 'node__click === null',
+                        test: 'node__click === null && node__hover === null',
                         value: 1
                       },
                       {
@@ -721,6 +725,10 @@ export class TreeComponent implements OnInit, OnChanges, OnDestroy {
                       {
                         test: "node__hover !== null && indata('marks_to_be_kept__hover', 'id', datum.id) || indata('targets_of_targets__hover', 'targets', datum.id) || (indata('sources_of_sources__hover', 'sources', datum.id) && datum.group !== 2 && datum.group !== 3)",
                         value: 1
+                      },
+                      {
+                        test: "node__hover && datum.id !== node__hover && node__click === null",
+                        value: 0.5
                       },
                       {
                         value: 0.1
@@ -771,7 +779,7 @@ export class TreeComponent implements OnInit, OnChanges, OnDestroy {
                   ],
                   "opacity": [
                     {
-                      test: 'node__click === null',
+                      test: 'node__click === null && node__hover === null',
                       value: 1
                     },
                     {
@@ -781,6 +789,10 @@ export class TreeComponent implements OnInit, OnChanges, OnDestroy {
                     {
                       test: "node__hover !== null && indata('marks_to_be_kept__hover', 'id', datum.id) || indata('targets_of_targets__hover', 'targets', datum.id) || (indata('sources_of_sources__hover', 'sources', datum.id) && datum.group !== 2 && datum.group !== 3)",
                       value: 1
+                    },
+                    {
+                      test: "node__hover && datum.id !== node__hover && node__click === null",
+                      value: 0.5
                     },
                     {
                       value: 0.1
