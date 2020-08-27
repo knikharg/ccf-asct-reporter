@@ -660,6 +660,10 @@ export class TreeComponent implements OnInit, OnChanges, OnDestroy {
                       value: 0.65,
                     },
                     {
+                      "test": "indata('marks_to_be_kept__hover', 'id', datum.source.id) || indata('sources_of_sources__hover', 'sources', datum.source.id)",
+                      "value": 0.4
+                    },
+                    {
                       "test": "node__click !== null",
                       "value": 0.1
                     },
